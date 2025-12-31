@@ -3,176 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Morfológica - Karl Gerstner</title>
+    <title>Caja Morfológica - Gerstner</title>
     <style>
-        /* Estética Suiza: Helvetica, limpieza y grillas */
-        body { 
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
-            padding: 40px; 
-            background-color: #f0f0f0; 
-            color: #1a1a1a;
-            line-height: 1.4;
-        }
+        :root { --black: #000; --white: #fff; --gray: #f4f4f4; --border: #ccc; }
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px; background: var(--white); color: var(--black); margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        h1 { font-weight: 700; text-transform: uppercase; font-size: 1.4rem; margin-bottom: 5px; letter-spacing: -0.5px; }
+        .subtitle { font-size: 0.85rem; color: #555; margin-bottom: 20px; border-bottom: 1px solid var(--black); padding-bottom: 10px; }
+        
+        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        button { font-family: inherit; font-weight: bold; padding: 8px 14px; border: 1px solid var(--black); cursor: pointer; background: var(--white); font-size: 0.75rem; text-transform: uppercase; }
+        .active-mode { background: var(--black) !important; color: var(--white) !important; }
+        .download-btn { background: #e0e0e0; }
 
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 30px; 
-            border: 1px solid #ccc;
-        }
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; }
+        th, td { border: 1px solid var(--border); padding: 10px; font-size: 13px; text-align: left; }
+        th { background: var(--gray); font-weight: bold; width: 180px; }
 
-        h1 { font-weight: 700; text-transform: uppercase; letter-spacing: -1px; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-
-        /* Controles de Modo */
-        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
-        button { 
-            font-family: inherit; font-weight: bold; padding: 10px 20px; 
-            border: 1px solid #000; cursor: pointer; transition: 0.2s;
-        }
-        .btn-edit { background: #000; color: #fff; }
-        .btn-use { background: #fff; color: #000; }
-        button:hover { opacity: 0.8; }
-
-        /* Tabla Estilo Gerstner */
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
-        th, td { border: 1px solid #ccc; padding: 12px; vertical-align: top; }
-        th { background: #f9f9f9; text-align: left; font-weight: 700; width: 150px; }
-
-        /* Estados de celdas */
         .selectable { cursor: pointer; }
-        .selectable:hover { background-color: #f0f0f0; }
-        .selected { background-color: #000 !important; color: #fff !important; }
-        
-        .edit-input { 
-            width: 100%; border: none; background: transparent; 
-            font-family: inherit; font-size: inherit; outline: none;
-        }
-        .edit-input:focus { background: #fffde7; }
+        .selected { background-color: var(--black) !important; color: var(--white) !important; }
+        .edit-input { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; outline: none; }
 
-        /* Resultado */
-        .result { 
-            margin-top: 40px; padding: 20px; border-top: 2px solid #000;
-            background: #f9f9f9; font-weight: bold;
-        }
-        .code-chain { font-size: 1.2em; letter-spacing: 1px; }
+        .result-area { margin-top: 25px; padding: 15px; background: var(--gray); border: 1px solid var(--black); }
+        .code-chain { display: block; margin-top: 5px; font-size: 1rem; font-weight: bold; }
         
-        .hidden { display: none; }
+        .footer-cite { margin-top: 40px; font-size: 0.75rem; color: #777; line-height: 1.4; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Caja Morfológica</h1>
-    <div class="subtitle">Programa para soluciones de diseño / Basado en Karl Gerstner</div>
+    <div class="subtitle">Programa como lógica — Karl Gerstner, <i>Diseñar Programas</i></div>
 
     <div class="controls">
-        <button id="btnEdit" class="btn-use" onclick="setMode('edit')">Modo Edición (Configurar)</button>
-        <button id="btnUse" class="btn-edit" onclick="setMode('use')">Modo Uso (Analizar)</button>
-        <button onclick="addRow()">+ Añadir Parámetro</button>
+        <button id="btnEdit" onclick="setMode('edit')" class="active-mode">Modo Edición</button>
+        <button id="btnUse" onclick="setMode('use')">Modo Uso</button>
+        <button onclick="addRow()">+ Parámetro</button>
+        <button class="download-btn" onclick="downloadResult()">Exportar Solución</button>
     </div>
 
-    <table id="morphTable">
-        <thead>
-            <tr>
-                <th>Parámetro</th>
-                <th>Opción 1</th>
-                <th>Opción 2</th>
-                <th>Opción 3</th>
-                <th>Opción 4</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
+    <div class="table-wrapper">
+        <table id="morphTable">
+            <thead>
+                <tr>
+                    <th>PARÁMETROS (Criterios)</th>
+                    <th colspan="4">COMPONENTES</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 
-    <div class="result" id="resultArea">
-        SOLUCIÓN OBTENIDA POR EL PROGRAMA:<br>
-        <span class="code-chain" id="solutionPath">— — —</span>
+    <div class="result-area">
+        <strong>CADENA DE SOLUCIÓN:</strong>
+        <span class="code-chain" id="solutionPath">Seleccione componentes en Modo Uso...</span>
+    </div>
+
+    <div class="footer-cite">
+        <strong>Referencia bibliográfica:</strong><br>
+        Gerstner, K. <i>Diseñar Programas</i>. Basado en el método morfológico desarrollado por Fritz Zwicky (1953).<br>
+        "El proceso creativo queda reducido a un acto de selección. Diseñar significa: seleccionar y combinar elementos de determinación".
     </div>
 </div>
 
 <script>
     let currentMode = 'edit';
-    // Estructura inicial basada en tus imágenes
     let matrixData = [
-        { param: "a. Base", opts: ["11. Palabra", "12. Abreviatura", "13. Grupo", "14. Combinado"] },
-        { param: "b. Color", opts: ["11. Claro", "12. Medio", "13. Oscuro", "14. Combinado"] },
-        { param: "c. Grosor", opts: ["31. Fino", "32. Normal", "33. Negra", "34. Combinado"] }
+        { param: "a. Base", opts: ["Palabra", "Abreviatura", "Grupo", "Combinado"] },
+        { param: "b. Color", opts: ["Claro", "Medio", "Oscuro", "Combinado"] },
+        { param: "c. Apariencia (Tamaño)", opts: ["Pequeño", "Medio", "Grande", "Combinado"] },
+        { param: "d. Expresión (Forma)", opts: ["Tal cual", "Mutilada", "Proyectada", "Sustituida"] }
     ];
-
     let selections = {};
 
     function setMode(mode) {
         currentMode = mode;
-        document.getElementById('btnEdit').className = (mode === 'edit' ? 'btn-edit' : 'btn-use');
-        document.getElementById('btnUse').className = (mode === 'use' ? 'btn-edit' : 'btn-use');
+        document.getElementById('btnEdit').classList.toggle('active-mode', mode === 'edit');
+        document.getElementById('btnUse').classList.toggle('active-mode', mode === 'use');
         renderTable();
     }
 
     function addRow() {
-        matrixData.push({ param: "Nuevo Parámetro", opts: ["", "", "", ""] });
+        matrixData.push({ param: "Nuevo Criterio", opts: ["", "", "", ""] });
         renderTable();
     }
 
-    function updateData(rowIndex, optIndex, value) {
-        if(optIndex === -1) {
-            matrixData[rowIndex].param = value;
-        } else {
-            matrixData[rowIndex].opts[optIndex] = value;
-        }
+    function updateData(rIdx, oIdx, val) {
+        if(oIdx === -1) matrixData[rIdx].param = val;
+        else matrixData[rIdx].opts[oIdx] = val;
     }
 
-    function selectOption(rowIndex, optIndex) {
-        if(currentMode !== 'use') return;
-        
-        selections[rowIndex] = matrixData[rowIndex].opts[optIndex];
+    function selectOption(rIdx, opt) {
+        if(currentMode !== 'use' || !opt) return;
+        selections[rIdx] = opt;
         renderTable();
         updateResult();
     }
 
     function updateResult() {
-        const chain = Object.values(selections).filter(s => s !== "").join(' + ');
-        document.getElementById('solutionPath').innerText = chain || "— — —";
+        const chain = Object.values(selections).filter(s => s).join(' + ');
+        document.getElementById('solutionPath').innerText = chain || "Seleccione componentes...";
     }
 
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-
         matrixData.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
-            
-            // Columna de Parámetro
             const th = document.createElement('th');
             if(currentMode === 'edit') {
                 th.innerHTML = `<input class="edit-input" value="${row.param}" onchange="updateData(${rIdx}, -1, this.value)">`;
-            } else {
-                th.innerText = row.param;
-            }
+            } else { th.innerText = row.param; }
             tr.appendChild(th);
 
-            // Columnas de Opciones
             row.opts.forEach((opt, oIdx) => {
                 const td = document.createElement('td');
                 if(currentMode === 'edit') {
                     td.innerHTML = `<input class="edit-input" placeholder="..." value="${opt}" onchange="updateData(${rIdx}, ${oIdx}, this.value)">`;
                 } else {
                     td.innerText = opt;
-                    td.className = 'selectable' + (selections[rIdx] === opt ? ' selected' : '');
-                    td.onclick = () => selectOption(rIdx, oIdx);
+                    if(opt) {
+                        td.className = 'selectable' + (selections[rIdx] === opt ? ' selected' : '');
+                        td.onclick = () => selectOption(rIdx, opt);
+                    }
                 }
                 tr.appendChild(td);
             });
-
             tbody.appendChild(tr);
         });
     }
 
-    // Iniciar
+    function downloadResult() {
+        const resultText = document.getElementById('solutionPath').innerText;
+        const blob = new Blob([`CAJA MORFOLÓGICA (MÉTODO GERSTNER)\nSolución: ${resultText}`], { type: 'text/plain' });
+        const anchor = document.createElement('a');
+        anchor.download = 'gerstner-solution.txt';
+        anchor.href = URL.createObjectURL(blob);
+        anchor.click();
+    }
     renderTable();
 </script>
-
 </body>
 </html>
