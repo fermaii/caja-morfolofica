@@ -3,37 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Morfológica del Tipograma - Edición Tipográfica</title>
+    <title>Caja Morfológica del Tipograma - Karl Gerstner</title>
     <style>
-        :root { --black: #000; --white: #fff; --gray: #f4f4f4; --border: #ccc; --accent: #e74c3c; }
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px; background: var(--white); color: var(--black); margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        
-        h1 { font-weight: 700; text-transform: uppercase; font-size: 1.4rem; margin-bottom: 5px; letter-spacing: -0.5px; }
-        .subtitle { font-size: 0.85rem; color: #555; margin-bottom: 20px; border-bottom: 1px solid var(--black); padding-bottom: 10px; }
-        
-        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100; }
-        button { font-family: inherit; font-weight: bold; padding: 8px 14px; border: 1px solid var(--black); cursor: pointer; background: var(--white); font-size: 0.75rem; text-transform: uppercase; }
-        .active-mode { background: var(--black) !important; color: var(--white) !important; }
-        .btn-danger { color: var(--accent); border-color: var(--accent); }
-        .btn-danger:hover { background: var(--accent); color: white; }
+        /* Estética Suiza: Helvetica y Grillas */
+        body { 
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+            padding: 40px; 
+            background-color: #ffffff; 
+            color: #000000;
+            line-height: 1.4;
+        }
 
+        .container { 
+            max-width: 1100px; 
+            margin: 0 auto; 
+        }
+
+        h1 { font-weight: 700; text-transform: uppercase; letter-spacing: -1px; margin-bottom: 5px; font-size: 1.5rem; }
+        .subtitle { color: #666; margin-bottom: 30px; border-bottom: 1px solid #000; padding-bottom: 10px; font-size: 0.9rem; }
+
+        /* Controles */
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        button { 
+            font-family: inherit; font-weight: bold; padding: 10px 20px; 
+            border: 1px solid #000; cursor: pointer; background: #fff; font-size: 0.7rem; text-transform: uppercase;
+        }
+        .active-mode { background: #000 !important; color: #fff !important; }
+        button:hover { background: #f0f0f0; }
+        .btn-export { background: #f9f9f9; }
+
+        /* Tabla */
         .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th, td { border: 1px solid var(--border); padding: 10px; font-size: 12px; text-align: left; position: relative; }
-        th { background: var(--gray); font-weight: bold; width: 220px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+        th, td { border: 1px solid #ccc; padding: 12px; vertical-align: top; text-align: left; }
+        th { background: #f9f9f9; font-weight: 700; width: 220px; }
 
-        .selectable { cursor: pointer; transition: 0.2s; }
-        .selected { background-color: var(--black) !important; color: var(--white) !important; }
-        .edit-input { width: 90%; border: none; background: transparent; font-family: inherit; font-size: inherit; outline: none; }
+        /* Estados */
+        .selectable { cursor: pointer; }
+        .selected { background-color: #000 !important; color: #fff !important; }
+        .edit-input { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; outline: none; }
         
-        .delete-row { cursor: pointer; color: var(--accent); font-weight: bold; font-size: 16px; margin-right: 5px; visibility: hidden; }
-        .editing .delete-row { visibility: visible; }
+        .delete-btn { 
+            color: #ff0000; cursor: pointer; margin-right: 8px; font-weight: bold; 
+            display: none; /* Solo visible en modo edición */
+        }
+        .editing .delete-btn { display: inline; }
 
-        .result-area { margin-top: 25px; padding: 15px; background: var(--gray); border: 1px solid var(--black); }
-        .code-chain { display: block; margin-top: 5px; font-size: 1rem; font-weight: bold; line-height: 1.5; }
+        /* Resultado */
+        .result { 
+            margin-top: 40px; padding: 20px; border: 1px solid #000;
+            background: #f9f9f9; 
+        }
+        .result strong { display: block; margin-bottom: 10px; text-transform: uppercase; font-size: 0.8rem; }
+        .code-chain { font-size: 1.1rem; font-weight: bold; letter-spacing: 0.5px; }
         
         .footer-cite { margin-top: 40px; font-size: 0.75rem; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
+
+        @media (max-width: 600px) {
+            body { padding: 20px; }
+            th { width: 120px; }
+        }
     </style>
 </head>
 <body class="editing">
@@ -43,10 +72,10 @@
     <div class="subtitle">Programa como lógica — Karl Gerstner, <i>Diseñar Programas</i></div>
 
     <div class="controls">
-        <button id="btnEdit" onclick="setMode('edit')" class="active-mode">Modo Edición</button>
+        <button id="btnEdit" class="active-mode" onclick="setMode('edit')">Modo Edición</button>
         <button id="btnUse" onclick="setMode('use')">Modo Uso</button>
-        <button onclick="addRow()">+ Añadir Parámetro</button>
-        <button onclick="downloadResult()">Exportar Solución</button>
+        <button onclick="addRow()">+ Parámetro</button>
+        <button class="btn-export" onclick="downloadResult()">Exportar Solución</button>
     </div>
 
     <div class="table-wrapper">
@@ -61,20 +90,18 @@
         </table>
     </div>
 
-    <div class="result-area">
-        <strong>CADENA DE SOLUCIÓN:</strong>
-        <span class="code-chain" id="solutionPath">Seleccione componentes...</span>
+    <div class="result">
+        <strong>Solución obtenida por el programa:</strong>
+        <span class="code-chain" id="solutionPath">— — —</span>
     </div>
 
     <div class="footer-cite">
-        <strong>Referencia bibliográfica:</strong> Gerstner, K. <i>Diseñar Programas</i>.<br>
-        "Siempre existe un grupo de soluciones, de entre las cuales una es la mejor en determinadas condiciones".
+        <strong>Referencia bibliográfica:</strong> Gerstner, K. <i>Diseñar Programas</i>. Basado en el método morfológico de Fritz Zwicky (1953).
     </div>
 </div>
 
 <script>
     let currentMode = 'edit';
-    // Datos por defecto proporcionados por el usuario
     let matrixData = [
         { param: "a. Contraste", opts: ["Alto", "Medio", "Bajo", "Monolineal"] },
         { param: "b. Eje de modulación", opts: ["Tradicional", "Invertido", "Oblicuo", "Variable"] },
@@ -101,14 +128,13 @@
         { param: "v. Inclinación", opts: ["Derecha", "Itálica", "Itálica invertida", "Otra"] }
     ];
 
-    // Ahora guardamos un set de selecciones por fila
     let selections = {}; 
 
     function setMode(mode) {
         currentMode = mode;
         document.body.className = mode === 'edit' ? 'editing' : 'using';
-        document.getElementById('btnEdit').classList.toggle('active-mode', mode === 'edit');
-        document.getElementById('btnUse').classList.toggle('active-mode', mode === 'use');
+        document.getElementById('btnEdit').className = (mode === 'edit' ? 'active-mode' : '');
+        document.getElementById('btnUse').className = (mode === 'use' ? 'active-mode' : '');
         renderTable();
     }
 
@@ -117,13 +143,11 @@
         renderTable();
     }
 
-    function removeRow(rIdx) {
-        if(confirm("¿Eliminar este parámetro?")) {
-            matrixData.splice(rIdx, 1);
-            delete selections[rIdx];
-            renderTable();
-            updateResult();
-        }
+    function removeRow(idx) {
+        matrixData.splice(idx, 1);
+        delete selections[idx];
+        renderTable();
+        updateResult();
     }
 
     function updateData(rIdx, oIdx, val) {
@@ -133,29 +157,25 @@
 
     function toggleOption(rIdx, opt) {
         if(currentMode !== 'use' || !opt) return;
-        
         if (!selections[rIdx]) selections[rIdx] = [];
         
-        const index = selections[rIdx].indexOf(opt);
-        if (index > -1) {
-            selections[rIdx].splice(index, 1); // Desmarcar
-        } else {
-            selections[rIdx].push(opt); // Marcar
-        }
+        const pos = selections[rIdx].indexOf(opt);
+        if (pos > -1) selections[rIdx].splice(pos, 1);
+        else selections[rIdx].push(opt);
         
         renderTable();
         updateResult();
     }
 
     function updateResult() {
-        let fullChain = [];
-        for (let rIdx in selections) {
-            if (selections[rIdx].length > 0) {
-                const paramName = matrixData[rIdx].param.split('.')[0]; // Toma la letra inicial
-                fullChain.push(`${paramName}: (${selections[rIdx].join(', ')})`);
+        let chain = [];
+        for (let r in selections) {
+            if (selections[r].length > 0) {
+                let id = matrixData[r].param.split('.')[0];
+                chain.push(id + ": " + selections[r].join(', '));
             }
         }
-        document.getElementById('solutionPath').innerText = fullChain.join(' | ') || "Seleccione componentes...";
+        document.getElementById('solutionPath').innerText = chain.join(' / ') || "— — —";
     }
 
     function renderTable() {
@@ -163,16 +183,15 @@
         tbody.innerHTML = '';
         matrixData.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
-            
-            // Columna Parámetro
             const th = document.createElement('th');
-            const delBtn = `<span class="delete-row" onclick="removeRow(${rIdx})">✕</span>`;
+            
             if(currentMode === 'edit') {
-                th.innerHTML = `${delBtn}<input class="edit-input" value="${row.param}" onchange="updateData(${rIdx}, -1, this.value)">`;
-            } else { th.innerText = row.param; }
+                th.innerHTML = `<span class="delete-btn" onclick="removeRow(${rIdx})">✕</span><input class="edit-input" value="${row.param}" onchange="updateData(${rIdx}, -1, this.value)">`;
+            } else {
+                th.innerText = row.param;
+            }
             tr.appendChild(th);
 
-            // Columnas Componentes
             row.opts.forEach((opt, oIdx) => {
                 const td = document.createElement('td');
                 if(currentMode === 'edit') {
@@ -180,8 +199,8 @@
                 } else {
                     td.innerText = opt;
                     if(opt) {
-                        const isSelected = selections[rIdx] && selections[rIdx].includes(opt);
-                        td.className = 'selectable' + (isSelected ? ' selected' : '');
+                        const sel = selections[rIdx] && selections[rIdx].includes(opt);
+                        td.className = 'selectable' + (sel ? ' selected' : '');
                         td.onclick = () => toggleOption(rIdx, opt);
                     }
                 }
@@ -192,12 +211,12 @@
     }
 
     function downloadResult() {
-        const resultText = document.getElementById('solutionPath').innerText;
-        const blob = new Blob([`CAJA MORFOLÓGICA TIPOGRÁFICA\nConfiguración: ${resultText}`], { type: 'text/plain' });
-        const anchor = document.createElement('a');
-        anchor.download = 'tipograma-gerstner.txt';
-        anchor.href = URL.createObjectURL(blob);
-        anchor.click();
+        const txt = document.getElementById('solutionPath').innerText;
+        const blob = new Blob([`PROGRAMA GERSTNER\n\nSolución: ${txt}`], {type: 'text/plain'});
+        const a = document.createElement('a');
+        a.download = 'solucion-gerstner.txt';
+        a.href = URL.createObjectURL(blob);
+        a.click();
     }
 
     renderTable();
