@@ -3,46 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caja Morfológica - Gerstner</title>
+    <title>Caja Morfológica del Tipograma - Edición Tipográfica</title>
     <style>
-        :root { --black: #000; --white: #fff; --gray: #f4f4f4; --border: #ccc; }
+        :root { --black: #000; --white: #fff; --gray: #f4f4f4; --border: #ccc; --accent: #e74c3c; }
         body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 20px; background: var(--white); color: var(--black); margin: 0; }
-        .container { max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1200px; margin: 0 auto; }
         
         h1 { font-weight: 700; text-transform: uppercase; font-size: 1.4rem; margin-bottom: 5px; letter-spacing: -0.5px; }
         .subtitle { font-size: 0.85rem; color: #555; margin-bottom: 20px; border-bottom: 1px solid var(--black); padding-bottom: 10px; }
         
-        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; background: white; padding: 10px 0; z-index: 100; }
         button { font-family: inherit; font-weight: bold; padding: 8px 14px; border: 1px solid var(--black); cursor: pointer; background: var(--white); font-size: 0.75rem; text-transform: uppercase; }
         .active-mode { background: var(--black) !important; color: var(--white) !important; }
-        .download-btn { background: #e0e0e0; }
+        .btn-danger { color: var(--accent); border-color: var(--accent); }
+        .btn-danger:hover { background: var(--accent); color: white; }
 
-        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th, td { border: 1px solid var(--border); padding: 10px; font-size: 13px; text-align: left; }
-        th { background: var(--gray); font-weight: bold; width: 180px; }
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { border: 1px solid var(--border); padding: 10px; font-size: 12px; text-align: left; position: relative; }
+        th { background: var(--gray); font-weight: bold; width: 220px; }
 
-        .selectable { cursor: pointer; }
+        .selectable { cursor: pointer; transition: 0.2s; }
         .selected { background-color: var(--black) !important; color: var(--white) !important; }
-        .edit-input { width: 100%; border: none; background: transparent; font-family: inherit; font-size: inherit; outline: none; }
+        .edit-input { width: 90%; border: none; background: transparent; font-family: inherit; font-size: inherit; outline: none; }
+        
+        .delete-row { cursor: pointer; color: var(--accent); font-weight: bold; font-size: 16px; margin-right: 5px; visibility: hidden; }
+        .editing .delete-row { visibility: visible; }
 
         .result-area { margin-top: 25px; padding: 15px; background: var(--gray); border: 1px solid var(--black); }
-        .code-chain { display: block; margin-top: 5px; font-size: 1rem; font-weight: bold; }
+        .code-chain { display: block; margin-top: 5px; font-size: 1rem; font-weight: bold; line-height: 1.5; }
         
-        .footer-cite { margin-top: 40px; font-size: 0.75rem; color: #777; line-height: 1.4; border-top: 1px solid #eee; padding-top: 15px; }
+        .footer-cite { margin-top: 40px; font-size: 0.75rem; color: #777; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
-<body>
+<body class="editing">
 
 <div class="container">
-    <h1>Caja Morfológica</h1>
+    <h1>Caja Morfológica del Tipograma</h1>
     <div class="subtitle">Programa como lógica — Karl Gerstner, <i>Diseñar Programas</i></div>
 
     <div class="controls">
         <button id="btnEdit" onclick="setMode('edit')" class="active-mode">Modo Edición</button>
         <button id="btnUse" onclick="setMode('use')">Modo Uso</button>
-        <button onclick="addRow()">+ Parámetro</button>
-        <button class="download-btn" onclick="downloadResult()">Exportar Solución</button>
+        <button onclick="addRow()">+ Añadir Parámetro</button>
+        <button onclick="downloadResult()">Exportar Solución</button>
     </div>
 
     <div class="table-wrapper">
@@ -59,28 +63,50 @@
 
     <div class="result-area">
         <strong>CADENA DE SOLUCIÓN:</strong>
-        <span class="code-chain" id="solutionPath">Seleccione componentes en Modo Uso...</span>
+        <span class="code-chain" id="solutionPath">Seleccione componentes...</span>
     </div>
 
     <div class="footer-cite">
-        <strong>Referencia bibliográfica:</strong><br>
-        Gerstner, K. <i>Diseñar Programas</i>. Basado en el método morfológico desarrollado por Fritz Zwicky (1953).<br>
-        "El proceso creativo queda reducido a un acto de selección. Diseñar significa: seleccionar y combinar elementos de determinación".
+        <strong>Referencia bibliográfica:</strong> Gerstner, K. <i>Diseñar Programas</i>.<br>
+        "Siempre existe un grupo de soluciones, de entre las cuales una es la mejor en determinadas condiciones".
     </div>
 </div>
 
 <script>
     let currentMode = 'edit';
+    // Datos por defecto proporcionados por el usuario
     let matrixData = [
-        { param: "a. Base", opts: ["Palabra", "Abreviatura", "Grupo", "Combinado"] },
-        { param: "b. Color", opts: ["Claro", "Medio", "Oscuro", "Combinado"] },
-        { param: "c. Apariencia (Tamaño)", opts: ["Pequeño", "Medio", "Grande", "Combinado"] },
-        { param: "d. Expresión (Forma)", opts: ["Tal cual", "Mutilada", "Proyectada", "Sustituida"] }
+        { param: "a. Contraste", opts: ["Alto", "Medio", "Bajo", "Monolineal"] },
+        { param: "b. Eje de modulación", opts: ["Tradicional", "Invertido", "Oblicuo", "Variable"] },
+        { param: "c. Peso", opts: ["Negrita", "Regular", "Light", "Otro"] },
+        { param: "d. Morfología", opts: ["Geométrica", "Caligráfica", "Script", "Otro"] },
+        { param: "e. Expresión (Forma)", opts: ["Curva", "Recta", "Mezcla", "Otro"] },
+        { param: "f. Contrucción", opts: ["Grilla", "Pluma", "Dibujo", "Modular"] },
+        { param: "g. Uniones", opts: ["Redondeadas", "Rectas", "Trampa de tinta", "Otro"] },
+        { param: "h. Altura de X", opts: ["Baja", "Normal", "Alta", "Variable"] },
+        { param: "i. Uso", opts: ["Display", "Texto", "Experimental", "Otro"] },
+        { param: "j. Ancho", opts: ["Condensada", "Normal", "Extendida", "Variable"] },
+        { param: "k. Proporciones", opts: ["Tradicional", "Geometrica", "Monoespaciada", "Otro"] },
+        { param: "l. Concepto", opts: ["Solución técnica", "Expresividad", "Experimentalidad", "Otro"] },
+        { param: "m. Terminaciones", opts: ["Serif", "Sans serif", "Otro", "..."] },
+        { param: "n. Tipo de serifa", opts: ["Tradicional", "Egipcia", "Gótica", "Didot"] },
+        { param: "ñ. Contraforma", opts: ["Normal", "Modificada", "Nula", "Cortante"] },
+        { param: "o. Estructura", opts: ["Stencil", "Normal", "Inline", ""] },
+        { param: "p. Tecnología", opts: ["Variable", "Color", "Imagen", "Normal"] },
+        { param: "q. Bordes", opts: ["Redondeados", "Rectos", "Puntiagudos", "Otro"] },
+        { param: "r. Métricas", opts: ["Tradicionales", "Misma altura", "Experimentales", "Variables"] },
+        { param: "s. Relleno", opts: ["Lineas", "Sólido", "Degradé", "Detalle/textura"] },
+        { param: "t. Acabado", opts: ["Vectorial", "Texturado", "Experimental", "Otro"] },
+        { param: "u. Caja", opts: ["Normal", "Rellena", "Invertido", "Extendido"] },
+        { param: "v. Inclinación", opts: ["Derecha", "Itálica", "Itálica invertida", "Otra"] }
     ];
-    let selections = {};
+
+    // Ahora guardamos un set de selecciones por fila
+    let selections = {}; 
 
     function setMode(mode) {
         currentMode = mode;
+        document.body.className = mode === 'edit' ? 'editing' : 'using';
         document.getElementById('btnEdit').classList.toggle('active-mode', mode === 'edit');
         document.getElementById('btnUse').classList.toggle('active-mode', mode === 'use');
         renderTable();
@@ -91,21 +117,45 @@
         renderTable();
     }
 
+    function removeRow(rIdx) {
+        if(confirm("¿Eliminar este parámetro?")) {
+            matrixData.splice(rIdx, 1);
+            delete selections[rIdx];
+            renderTable();
+            updateResult();
+        }
+    }
+
     function updateData(rIdx, oIdx, val) {
         if(oIdx === -1) matrixData[rIdx].param = val;
         else matrixData[rIdx].opts[oIdx] = val;
     }
 
-    function selectOption(rIdx, opt) {
+    function toggleOption(rIdx, opt) {
         if(currentMode !== 'use' || !opt) return;
-        selections[rIdx] = opt;
+        
+        if (!selections[rIdx]) selections[rIdx] = [];
+        
+        const index = selections[rIdx].indexOf(opt);
+        if (index > -1) {
+            selections[rIdx].splice(index, 1); // Desmarcar
+        } else {
+            selections[rIdx].push(opt); // Marcar
+        }
+        
         renderTable();
         updateResult();
     }
 
     function updateResult() {
-        const chain = Object.values(selections).filter(s => s).join(' + ');
-        document.getElementById('solutionPath').innerText = chain || "Seleccione componentes...";
+        let fullChain = [];
+        for (let rIdx in selections) {
+            if (selections[rIdx].length > 0) {
+                const paramName = matrixData[rIdx].param.split('.')[0]; // Toma la letra inicial
+                fullChain.push(`${paramName}: (${selections[rIdx].join(', ')})`);
+            }
+        }
+        document.getElementById('solutionPath').innerText = fullChain.join(' | ') || "Seleccione componentes...";
     }
 
     function renderTable() {
@@ -113,12 +163,16 @@
         tbody.innerHTML = '';
         matrixData.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
+            
+            // Columna Parámetro
             const th = document.createElement('th');
+            const delBtn = `<span class="delete-row" onclick="removeRow(${rIdx})">✕</span>`;
             if(currentMode === 'edit') {
-                th.innerHTML = `<input class="edit-input" value="${row.param}" onchange="updateData(${rIdx}, -1, this.value)">`;
+                th.innerHTML = `${delBtn}<input class="edit-input" value="${row.param}" onchange="updateData(${rIdx}, -1, this.value)">`;
             } else { th.innerText = row.param; }
             tr.appendChild(th);
 
+            // Columnas Componentes
             row.opts.forEach((opt, oIdx) => {
                 const td = document.createElement('td');
                 if(currentMode === 'edit') {
@@ -126,8 +180,9 @@
                 } else {
                     td.innerText = opt;
                     if(opt) {
-                        td.className = 'selectable' + (selections[rIdx] === opt ? ' selected' : '');
-                        td.onclick = () => selectOption(rIdx, opt);
+                        const isSelected = selections[rIdx] && selections[rIdx].includes(opt);
+                        td.className = 'selectable' + (isSelected ? ' selected' : '');
+                        td.onclick = () => toggleOption(rIdx, opt);
                     }
                 }
                 tr.appendChild(td);
@@ -138,12 +193,13 @@
 
     function downloadResult() {
         const resultText = document.getElementById('solutionPath').innerText;
-        const blob = new Blob([`CAJA MORFOLÓGICA (MÉTODO GERSTNER)\nSolución: ${resultText}`], { type: 'text/plain' });
+        const blob = new Blob([`CAJA MORFOLÓGICA TIPOGRÁFICA\nConfiguración: ${resultText}`], { type: 'text/plain' });
         const anchor = document.createElement('a');
-        anchor.download = 'gerstner-solution.txt';
+        anchor.download = 'tipograma-gerstner.txt';
         anchor.href = URL.createObjectURL(blob);
         anchor.click();
     }
+
     renderTable();
 </script>
 </body>
